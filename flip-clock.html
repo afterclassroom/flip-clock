@@ -15,33 +15,37 @@ A flip clock, timer and countdown made with Polymer
 -->
 <polymer-element name="flip-clock" attributes="displayMode commandButtons showSeconds startFrom auto">
 
-  <template>
+<template>
 
-    <link rel="stylesheet" href="flip-clock.css" />
+  <link rel="stylesheet" href="flip-clock.css" />
 
-      <div id="clock">
-        <span id="hours0">{{time[0]}}</span><span id="hours1">{{time[1]}}</span>
+  <content>
+
+    <div id="clock">
+      <span id="hours0">{{time[0]}}</span><span id="hours1">{{time[1]}}</span>
+      <b>:</b>
+      <span id="minutes0">{{time[2]}}</span><span id="minutes1">{{time[3]}}</span>
+
+      <template if="{{showSeconds}}">
         <b>:</b>
-        <span id="minutes0">{{time[2]}}</span><span id="minutes1">{{time[3]}}</span>
-
-        <template if="{{showSeconds}}">
-          <b>:</b>
-          <span id="seconds0">{{time[4]}}</span><span id="seconds1">{{time[5]}}</span>
-        </template>
-
-      </div>
-
-      <template if="{{commandButtons && displayMode !== 'clock'}}">
-        <button class="toggle btn" on-click="{{startCount}}" disabled?="{{isRunning}}">Start</button>
-        <button class="toggle btn" on-click="{{stopCount}}">Stop</button>
-        <button class="reset btn" on-click="{{resetCount}}">Reset</button>
+        <span id="seconds0">{{time[4]}}</span><span id="seconds1">{{time[5]}}</span>
       </template>
 
-  </template>
+    </div>
 
-  <script>
+    <template if="{{commandButtons && displayMode !== 'clock'}}">
+      <button id="btnStart" class="toggle btn" on-click="{{startCount}}" disabled?="{{isRunning}}">Start</button>
+      <button class="toggle btn" on-click="{{stopCount}}">Stop</button>
+      <button class="reset btn" on-click="{{resetCount}}">Reset</button>
+    </template>
 
-    Polymer('flip-clock', {
+  </content>
+
+</template>
+
+<script>
+
+Polymer('flip-clock', {
       /**
        * The `displayMode` attribute determine the kind of clock to display.
        *
@@ -50,24 +54,24 @@ A flip clock, timer and countdown made with Polymer
        * @default clock
        * @options clock, countdown, timer
        */
-      displayMode: 'clock',
+       displayMode: 'clock',
 
       /**
        * Display start/stop and reset buttons
        *
        * @attribute commandButtons
-       * @type boolean
+       * @type bool
        */
-      commandButtons: false,
+       commandButtons: false,
 
       /**
        * Show or hide seconds
        *
        * @attribute showSeconds
-       * @type boolean
+       * @type bool
        * @default true
        */
-      showSeconds: true,
+       showSeconds: true,
 
       /**
        * Set the minutes to start from for the countdown mode
@@ -76,7 +80,7 @@ A flip clock, timer and countdown made with Polymer
        * @type int
        * @default null
        */
-      startFrom: null,
+       startFrom: null,
 
       /**
        * String containing the digits displayed in the flip clock
@@ -85,7 +89,7 @@ A flip clock, timer and countdown made with Polymer
        * @type string
        * @default '000000'
        */
-      time: '000000',
+       time: '000000',
 
       /**
        * Set the hours, minutes and seconds in the timer
@@ -93,30 +97,30 @@ A flip clock, timer and countdown made with Polymer
        * @attribute timer
        * @type string
        */
-      timer: null,
+       timer: null,
 
       /**
        * Auto start timer and/or countdown
        *
        * @attribute auto
-       * @type boolean
+       * @type bool
        */
-      auto: false,
+       auto: false,
 
       /**
        * Track if the timer (or the countdown) is running or not
        *
        * @attribute isRunning
-       * @type boolean
+       * @type bool
        */
-      isRunning: false,
+       isRunning: false,
 
       /**
        * The `createClock` method start a clock that display the current time.
        *
        * @method createClock
        */
-      createClock: function() {
+       createClock: function() {
         this.time = moment().format('HHmmss');
         this.async(this.createClock, null, 1000);
       },
@@ -126,9 +130,9 @@ A flip clock, timer and countdown made with Polymer
        *
        * @method createTimer
        */
-      createTimer: function() {
+       createTimer: function() {
         if(this.isRunning) {
-          this.time = this.timer.add(1, 's').format('HHmmss');
+          this.time = this.timer.add('s', 1).format('HHmmss');
           this.async(this.createTimer, null, 1000);
         }
       },
@@ -138,11 +142,13 @@ A flip clock, timer and countdown made with Polymer
        *
        * @method createCountdown
        */
-      createCountdown: function() {
+       createCountdown: function() {
         if(this.isRunning) {
           if(this.time > 0) {
-            this.time = this.timer.subtract(1, 's').format('HHmmss');
+            this.time = this.timer.subtract('s', 1).format('HHmmss');
             this.async(this.createCountdown, null, 1000);
+          }else{
+            this.fire("countdown_finished");
           }
         }
       },
@@ -151,7 +157,7 @@ A flip clock, timer and countdown made with Polymer
        *
        * @method startCount
        */
-      startCount: function() {
+       startCount: function() {
         if(!this.timer) {
           this.timer = moment().hours(0).minutes(this.startFrom || 0).seconds(0);
         }
@@ -164,7 +170,7 @@ A flip clock, timer and countdown made with Polymer
        *
        * @method stopCount
        */
-      stopCount: function() {
+       stopCount: function() {
         this.isRunning = false;
       },
 
@@ -173,7 +179,7 @@ A flip clock, timer and countdown made with Polymer
        *
        * @method resetCount
        */
-      resetCount: function() {
+       resetCount: function() {
         this.isRunning = false;
         this.time = this.startFrom ? '00' + this.startFrom + '00' : '000000';
         this.timer = null;
@@ -184,24 +190,30 @@ A flip clock, timer and countdown made with Polymer
       ready: function() {
         switch(this.displayMode) {
           case 'timer':
-            if(this.auto === true) {
-              this.startCount();
-            }
-            break;
+          if(this.auto === true) {
+            this.startCount();
+          }
+          break;
           case 'countdown':
-            if(this.auto === true) {
-              this.createCountdown();
-            }
-            break;
+          if(this.auto === true) {
+            this.time = this.startFrom ? '00' + this.startFrom + '00' : '000000';
+            this.timer = moment().hours(0).minutes(this.startFrom || 0).seconds(0);
+            this.isRunning = true;
+            this.createCountdown();
+          }
+          break;
           default:
-            this.createClock();
+          this.createClock();
         }
         if(this.startFrom) {
           this.time = '00' + this.startFrom + '00';
         }
+      },
+      startFromChanged: function(attrName, oldVal, newVal) {
+        this.ready();
       }
     });
 
-  </script>
+</script>
 
 </polymer-element>
